@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Recorre el ciclo de vida completo de un hallazgo contra la API en ejecucion y muestra
-# el codigo HTTP de cada llamada. Sirve para generar las capturas de evidencia.
+# Recorre el ciclo de vida completo de un hallazgo contra la API en ejecucion -incluyendo
+# el dashboard y el historial de la Parte 2- y muestra el codigo HTTP de cada llamada.
+# Sirve para generar las capturas de evidencia del README.
 #
 # Requisitos: la aplicacion levantada (mvn spring-boot:run) y curl.
 # Uso:        ./scripts/demo-api.sh            (usa http://localhost:8080)
@@ -8,10 +9,11 @@
 
 set -u
 BASE="${BASE_URL:-http://localhost:8080/api/hallazgos}"
+ACTOR="${ACTOR:-nicolas.palacio}"
 
 llamar() {
   local metodo="$1" url="$2" cuerpo="${3:-}"
-  local args=(-s -w '\nHTTP %{http_code}\n' -X "$metodo" "$url")
+  local args=(-s -w '\nHTTP %{http_code}\n' -X "$metodo" "$url" -H "X-Actor: $ACTOR")
   if [ -n "$cuerpo" ]; then args+=(-H 'Content-Type: application/json' -d "$cuerpo"); fi
   curl "${args[@]}"
 }
@@ -48,3 +50,9 @@ llamar GET "$BASE/$ID"
 
 paso "9. Listar todos los hallazgos (espera 200)"
 llamar GET "$BASE"
+
+paso "10. Consultar el historial cronologico del hallazgo (espera 200, 3 eventos en orden)"
+llamar GET "$BASE/$ID/historial"
+
+paso "11. Consultar el dashboard consolidado (espera 200)"
+llamar GET "$BASE/dashboard"
