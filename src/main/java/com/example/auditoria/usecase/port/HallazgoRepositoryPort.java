@@ -11,4 +11,9 @@ public interface HallazgoRepositoryPort {
     void guardar(HallazgoAuditoria hallazgo);
     Optional<HallazgoAuditoria> buscarPorId(HallazgoId id);
     List<HallazgoAuditoria> buscarTodos();
+
+    // Metodos anadidos en la Parte 2: mismo puerto, sin stack de lectura separado
+    List<ConteoCategoria> contarPorSeveridad();
+    List<ConteoCategoria> contarPorEstado();
+    List<PromedioCategoria> promedioDiasCierrePorArea();
 }
