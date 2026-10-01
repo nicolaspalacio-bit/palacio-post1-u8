@@ -3,7 +3,6 @@ package com.example.auditoria.usecase.dobles;
 import com.example.auditoria.domain.entity.HallazgoAuditoria;
 import com.example.auditoria.domain.valueobject.EstadoHallazgo;
 import com.example.auditoria.domain.valueobject.HallazgoId;
-import com.example.auditoria.domain.valueobject.Severidad;
 import com.example.auditoria.usecase.port.ConteoCategoria;
 import com.example.auditoria.usecase.port.HallazgoRepositoryPort;
 import com.example.auditoria.usecase.port.PromedioCategoria;

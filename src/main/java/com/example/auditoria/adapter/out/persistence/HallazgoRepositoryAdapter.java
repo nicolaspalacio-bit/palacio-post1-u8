@@ -1,13 +1,16 @@
 package com.example.auditoria.adapter.out.persistence;
 
 import com.example.auditoria.domain.entity.HallazgoAuditoria;
+import com.example.auditoria.domain.valueobject.EstadoHallazgo;
 import com.example.auditoria.domain.valueobject.HallazgoId;
 import com.example.auditoria.domain.valueobject.PlanRemediacion;
 import com.example.auditoria.usecase.port.ConteoCategoria;
 import com.example.auditoria.usecase.port.HallazgoRepositoryPort;
 import com.example.auditoria.usecase.port.PromedioCategoria;
 import org.springframework.stereotype.Component;
-
+import java.time.temporal.ChronoUnit;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,11 +51,14 @@ public class HallazgoRepositoryAdapter implements HallazgoRepositoryPort {
             .map(p -> new ConteoCategoria(p.getCategoria(), p.getTotal())).toList();
     }
 
-    @Override
+      @Override
     public List<PromedioCategoria> promedioDiasCierrePorArea() {
-        return jpa.promedioDiasCierrePorArea().stream()
-            .map(p -> new PromedioCategoria(p.getCategoria(),
-                p.getPromedio() == null ? 0.0 : Math.round(p.getPromedio() * 10) / 10.0))
+        return jpa.findByEstado(EstadoHallazgo.CERRADO).stream()
+            .filter(e -> e.getFechaCierre() != null)
+            .collect(Collectors.groupingBy(HallazgoJpaEntity::getAreaResponsable, TreeMap::new,
+                Collectors.averagingLong(e -> ChronoUnit.DAYS.between(e.getFechaDeteccion(), e.getFechaCierre()))))
+            .entrySet().stream()
+            .map(par -> new PromedioCategoria(par.getKey(), Math.round(par.getValue() * 10) / 10.0))
             .toList();
     }
 

@@ -1,5 +1,6 @@
 package com.example.auditoria.adapter.out.persistence;
 
+import com.example.auditoria.domain.valueobject.EstadoHallazgo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -13,18 +14,12 @@ public interface HallazgoJpaRepository extends JpaRepository<HallazgoJpaEntity, 
     @Query("SELECT h.estado AS categoria, COUNT(h) AS total FROM HallazgoJpaEntity h GROUP BY h.estado")
     List<ConteoProjection> contarPorEstado();
 
-    @Query("SELECT h.areaResponsable AS categoria, "
-         + "AVG(DATEDIFF('DAY', h.fechaDeteccion, h.fechaCierre)) AS promedio "
-         + "FROM HallazgoJpaEntity h WHERE h.estado = 'CERRADO' GROUP BY h.areaResponsable")
-    List<PromedioProjection> promedioDiasCierrePorArea();
+    // Consulta derivada: evita DATEDIFF (funcion propia de H2) y la comparacion enum = 'texto',
+    // que Hibernate 6 rechaza al validar la consulta durante el arranque.
+    List<HallazgoJpaEntity> findByEstado(EstadoHallazgo estado);
 
     interface ConteoProjection {
         String getCategoria();
         Long getTotal();
-    }
-
-    interface PromedioProjection {
-        String getCategoria();
-        Double getPromedio();
     }
 }
