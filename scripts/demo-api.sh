@@ -21,7 +21,7 @@ llamar() {
 paso() { printf '\n== %s ==\n' "$1"; }
 
 paso "1. Registrar un hallazgo (espera 201 Created)"
-respuesta=$(llamar POST "$BASE" '{"titulo":"Contraseñas por defecto en servidor de pruebas","descripcion":"El servidor QA usa credenciales por defecto del fabricante","areaResponsable":"Infraestructura","severidad":"ALTA","fechaDeteccion":"2026-08-01"}')
+respuesta=$(llamar POST "$BASE" '{"titulo":"Contrasenas por defecto en servidor de pruebas","descripcion":"El servidor QA usa credenciales por defecto del fabricante","areaResponsable":"Infraestructura","severidad":"ALTA","fechaDeteccion":"2026-08-01"}')
 echo "$respuesta"
 ID=$(echo "$respuesta" | sed -n 's/.*"hallazgoId":"\([^"]*\)".*/\1/p')
 
