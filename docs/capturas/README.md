@@ -1,16 +1,11 @@
 # Capturas de evidencia
 
-Carpeta para las capturas de pantalla de los endpoints en ejecución, referenciadas desde
-la sección "Evidencia de ejecución" del README principal.
+Salida de `scripts/demo-api.sh` ejecutado en Git Bash contra la aplicación levantada con
+`mvn spring-boot:run`. Están referenciadas desde la sección "Evidencia de ejecución" del
+README principal.
 
-Con la aplicación levantada (`mvn spring-boot:run`), ejecutar `../../scripts/demo-api.sh`
-y capturar la salida de cada paso (o el equivalente en Postman). Nombrar los archivos
-según el paso que documentan, por ejemplo:
-
-- `01-registrar-hallazgo.png`      -> POST /api/hallazgos (201)
-- `03-cerrar-sin-remediacion.png`  -> PATCH .../cerrar sobre ABIERTO (400)
-- `04-iniciar-remediacion.png`     -> PATCH .../iniciar-remediacion (200)
-- `06-cerrar.png`                  -> PATCH .../cerrar (200)
-- `07-reabrir.png`                 -> PATCH .../reabrir (200)
-- `10-historial.png`               -> GET .../historial (200, 3 eventos en orden)
-- `11-dashboard.png`               -> GET .../dashboard (200)
+| Archivo | Pasos del script | Qué demuestra |
+|---|---|---|
+| `01-demo-pasos-1-a-7.png` | 1 a 7 | `POST` 201, rechazo de transiciones inválidas con 400 y ciclo completo con 200 |
+| `02-demo-pasos-8-y-9.png` | 8 y 9 | Consulta de un hallazgo y listado de todos (200) |
+| `03-demo-pasos-10-y-11.png` | 10 y 11 | Historial cronológico con 3 eventos y dashboard consolidado (200) |

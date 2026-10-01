@@ -120,7 +120,7 @@ bancario hipotético.
 | Criterio (guía, secciones 4.4 y 7) | Respuesta para este proyecto |
 |---|---|
 | Escala y carga | Un único desarrollador ejecutando el proyecto localmente para fines académicos: cero usuarios concurrentes reales. No existe ninguna diferencia de escala entre lecturas y escrituras que justifique infraestructura separada, porque ambas ocurren contra la misma instancia H2 bajo la misma carga mínima. |
-| Complejidad de las consultas | Los tres indicadores del dashboard —conteo por severidad, conteo por estado y promedio de días de cierre por área— se resuelven con tres consultas JPQL de agregación (`GROUP BY`, `AVG`) sobre el mismo esquema `hallazgos`. No requieren otra tecnología de base de datos ni un modelo desnormalizado aparte; una *interface projection* de Spring Data JPA es suficiente. |
+| Complejidad de las consultas | Los tres indicadores del dashboard —conteo por severidad, conteo por estado y promedio de días de cierre por área— se resuelven con dos consultas JPQL de agregación (`GROUP BY`, `COUNT`) y una consulta derivada sobre los hallazgos cerrados cuyo promedio se calcula en el adaptador, todo sobre el mismo esquema `hallazgos`. No requieren otra tecnología de base de datos ni un modelo desnormalizado aparte; una *interface projection* de Spring Data JPA es suficiente. |
 | Consistencia | El comité revisa el dashboard antes de una reunión mensual: es, por definición, un reporte generado bajo demanda, igual que cualquier consulta agregada. No hay ninguna expectativa de tiempo real ni de actualización en milisegundos que justifique tolerar consistencia eventual a cambio de escalar el lado de lectura. |
 | Naturaleza de la trazabilidad exigida | Cumplimiento necesita reconstruir *la secuencia* de cambios —quién, cuándo, de qué estado a qué estado—, no reconstruir el estado actual del hallazgo reproduciendo eventos uno por uno. Una bitácora cronológica adicional, que coexiste con el estado ya persistido, satisface literalmente el requisito sin convertir el historial en la fuente de verdad del agregado. |
 | Señales de sobre-ingeniería | No hay ningún experto de negocio disponible para modelar un catálogo de eventos de dominio (el equipo es una sola persona). El desarrollador no tiene experiencia previa con Event Sourcing, y la guía documenta su curva de aprendizaje como alta incluso para equipos experimentados. Construir dos modelos sincronizados y un Event Store para un sistema con datos de prueba manuales sería exactamente la desproporción entre infraestructura y lógica de negocio real que la guía señala como alerta de sobre-ingeniería. |
@@ -143,8 +143,10 @@ prototipo académico a producción con miles de hallazgos concurrentes.
 ## Extensión implementada
 
 En lugar de un stack de lectura separado, `HallazgoRepositoryPort` —el mismo puerto de la
-Parte 1— gana tres métodos de consulta agregada, implementados como *interface
-projections* de Spring Data JPA sobre el mismo `HallazgoJpaRepository`:
+Parte 1— gana tres métodos de consulta agregada sobre el mismo `HallazgoJpaRepository`: los dos
+conteos usan *interface projections* de Spring Data JPA y el promedio de días de cierre se
+calcula en el adaptador a partir de los hallazgos cerrados (así no depende de funciones de
+fecha propias de H2):
 
 ```java
 List<ConteoCategoria> contarPorSeveridad();
@@ -272,10 +274,28 @@ tal como exige el checkpoint del Paso 6.
 
 ## Evidencia de ejecución
 
-Las capturas de los endpoints en ejecución (`scripts/demo-api.sh` contra la aplicación
-levantada localmente) se agregan en [`docs/capturas/`](docs/capturas). Cada captura
-corresponde a un paso numerado del script, para poder verificar el código HTTP y el cuerpo
-de la respuesta lado a lado con el checkpoint que documenta.
+Salida de [`scripts/demo-api.sh`](scripts/demo-api.sh) contra la aplicación levantada
+localmente con `mvn spring-boot:run`. Cada bloque muestra el paso numerado del script, el
+código HTTP esperado y el obtenido, de modo que puede contrastarse con los checkpoints de
+los Pasos 6 y 11. Las imágenes están en [`docs/capturas/`](docs/capturas).
+
+**Pasos 1 a 7 — registro, transiciones inválidas (400) y ciclo de vida completo (Parte 1).**
+`POST` devuelve `201` con el `hallazgoId`; cerrar un hallazgo `ABIERTO` y reabrir uno
+`EN_REMEDIACION` devuelven `400`; iniciar remediación, cerrar y reabrir devuelven `200`.
+
+![Pasos 1 a 7 de demo-api.sh](docs/capturas/01-demo-pasos-1-a-7.png)
+
+**Pasos 8 y 9 — consulta puntual y listado.** El hallazgo queda en `REABIERTO` con su plan
+de remediación embebido y la fecha de cierre limpiada por `reabrir()`.
+
+![Pasos 8 y 9 de demo-api.sh](docs/capturas/02-demo-pasos-8-y-9.png)
+
+**Pasos 10 y 11 — historial cronológico y dashboard (Parte 2).** El historial contiene
+exactamente las tres transiciones, en orden y con su actor. El dashboard agrupa por
+severidad y por estado; el promedio de días de cierre aparece vacío porque el único
+hallazgo que se cerró fue reabierto después, así que ninguno está en `CERRADO`.
+
+![Pasos 10 y 11 de demo-api.sh](docs/capturas/03-demo-pasos-10-y-11.png)
 
 ## Estructura del repositorio
 
